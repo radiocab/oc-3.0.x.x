@@ -1,17 +1,17 @@
 <?php
-class ControllerExtensionCurrencyFixer extends Controller {
+class ControllerExtensionCurrencyCbr extends Controller {
 
 	private $error = array();
 
 	public function index() {
-		$this->load->language('extension/currency/fixer');
+		$this->load->language('extension/currency/cbr');
 
 		$this->document->setTitle($this->language->get('heading_title'));
 
 		$this->load->model('setting/setting');
 
 		if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validate()) {
-			$this->model_setting_setting->editSetting('currency_fixer', $this->request->post);
+			$this->model_setting_setting->editSetting('currency_cbr', $this->request->post);
 			$this->session->data['success'] = $this->language->get('text_success');
 			$this->response->redirect($this->url->link('marketplace/extension', 'user_token=' . $this->session->data['user_token'] . '&type=currency', true));
 		}
@@ -20,12 +20,6 @@ class ControllerExtensionCurrencyFixer extends Controller {
 			$data['error_warning'] = $this->error['warning'];
 		} else {
 			$data['error_warning'] = '';
-		}
-
-		if (isset($this->error['api'])) {
-			$data['error_api'] = $this->error['api'];
-		} else {
-			$data['error_api'] = '';
 		}
 
 		if (isset($this->error['ip'])) {
@@ -48,10 +42,10 @@ class ControllerExtensionCurrencyFixer extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('extension/currency/fixer', 'user_token=' . $this->session->data['user_token'], true)
+			'href' => $this->url->link('extension/currency/cbr', 'user_token=' . $this->session->data['user_token'], true)
 		);
 
-		$data['action'] = $this->url->link('extension/currency/fixer', 'user_token=' . $this->session->data['user_token'], true);
+		$data['action'] = $this->url->link('extension/currency/cbr', 'user_token=' . $this->session->data['user_token'], true);
 		$data['cancel'] = $this->url->link('marketplace/extension', 'user_token=' . $this->session->data['user_token'] . '&type=currency', true);
 		$data['refresh'] = $this->url->link('localisation/currency', 'user_token=' . $this->session->data['user_token'], true);
 
@@ -59,43 +53,41 @@ class ControllerExtensionCurrencyFixer extends Controller {
 		$data['text_edit'] = str_replace('%1',$this->url->link('localisation/currency', 'user_token=' . $this->session->data['user_token'], true), $data['text_edit']);
 		$data['text_edit'] = str_replace('%2',$this->url->link('setting/store', 'user_token=' . $this->session->data['user_token'], true), $data['text_edit']);
 
-		$data['currency_fixer_cron'] = 'curl -s &quot;' . HTTPS_CATALOG . 'index.php?route=extension/currency/fixer/refresh&quot;';
+		$data['currency_cbr_cron'] = 'curl -s &quot;' . HTTPS_CATALOG . 'index.php?route=extension/currency/cbr/refresh&quot;';
 
-		if (isset($this->request->post['currency_fixer_api'])) {
-			$data['currency_fixer_api'] = $this->request->post['currency_fixer_api'];
+		if (isset($this->request->post['currency_cbr_ip'])) {
+			$data['currency_cbr_ip'] = $this->request->post['currency_cbr_ip'];
 		} else {
-			$data['currency_fixer_api'] = (string)$this->config->get('currency_fixer_api');
+			$data['currency_cbr_ip'] = (string)$this->config->get('currency_cbr_ip');
 		}
 
-		if (isset($this->request->post['currency_fixer_ip'])) {
-			$data['currency_fixer_ip'] = $this->request->post['currency_fixer_ip'];
+		if (isset($this->request->post['currency_cbr_status'])) {
+			$data['currency_cbr_status'] = $this->request->post['currency_cbr_status'];
 		} else {
-			$data['currency_fixer_ip'] = (string)$this->config->get('currency_fixer_ip');
-		}
-
-		if (isset($this->request->post['currency_fixer_status'])) {
-			$data['currency_fixer_status'] = $this->request->post['currency_fixer_status'];
-		} else {
-			$data['currency_fixer_status'] = $this->config->get('currency_fixer_status');
+			$data['currency_cbr_status'] = $this->config->get('currency_cbr_status');
 		}
 
 		$data['header'] = $this->load->controller('common/header');
 		$data['column_left'] = $this->load->controller('common/column_left');
 		$data['footer'] = $this->load->controller('common/footer');
 
-		$this->response->setOutput($this->load->view('extension/currency/fixer', $data));
+		$this->response->setOutput($this->load->view('extension/currency/cbr', $data));
 	}
 
 
 	protected function validate() {
-		if (!$this->user->hasPermission('modify', 'extension/currency/fixer')) {
+		if (!$this->user->hasPermission('modify', 'extension/currency/cbr')) {
 			$this->error['warning'] = $this->language->get('error_permission');
 		} else {
-			if (empty($this->request->post['currency_fixer_api'])) {
-				$this->error['api'] = $this->language->get('error_api');
+			if (!empty($this->request->post['currency_cbr_status'])) { 
+				$this->load->model('localisation/currency');
+				$euro_currency = $this->model_localisation_currency->getCurrencyByCode('RUB');
+				if (empty($euro_currency)) {
+					$this->error['warning'] = $this->language->get('error_euro');
+				}
 			}
-			if (!empty($this->request->post['currency_fixer_ip'])) {
-				if (!filter_var($this->request->post['currency_fixer_ip'],FILTER_VALIDATE_IP)) {
+			if (!empty($this->request->post['currency_cbr_ip'])) {
+				if (!filter_var($this->request->post['currency_cbr_ip'],FILTER_VALIDATE_IP)) {
 					$this->error['ip'] = $this->language->get('error_ip');
 				}
 			}
@@ -113,8 +105,8 @@ class ControllerExtensionCurrencyFixer extends Controller {
 
 
 	public function currency() {
-		$this->load->model('extension/currency/fixer');
-		$this->model_extension_currency_fixer->refresh();
+		$this->load->model('extension/currency/cbr');
+		$this->model_extension_currency_cbr->refresh();
 		return null;
 	}
 }
